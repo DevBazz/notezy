@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Visibility {
+  PRIVATE
+  SHARED
+  PUBLIC
+}
+
+enum ShareStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id         String    @id @default(uuid())
+  clerkId    String    @unique
+  username   String
+  name       String?
+  image      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  notes           Note[]
+  shareSent       NoteShare[] @relation("shareSender")
+  shareReceived   NoteShare[] @relation("shareReceiver")
+}
+
+model Note {
+  id         String    @id @default(uuid())
+  authorId   String
+  title      String
+  content    String
+  icon       String?
+  color      String?
+  visibility Visibility @default(PRIVATE)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  creator  User   @relation(fields: [authorId], references: [id])
+  shares   NoteShare[]
+}
+
+model NoteShare {
+  id         String    @id @default(uuid())
+  noteId     String
+  senderId   String
+  receiverId String
+  status     ShareStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
+
+  note     Note @relation(fields: [noteId], references: [id])
+  sender   User @relation("shareSender", fields: [senderId], references: [id])
+  receiver User @relation("shareReceiver", fields: [receiverId], references: [id])
+}
