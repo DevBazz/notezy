@@ -1,12 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from "./generated/prisma/client";
 
-declare global {
-  // allow global `var` in NodeJS to store prisma during HMR in development
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
-}
+const connectionString = `${process.env.DATABASE_URL}`
 
-const prisma = global.prisma ?? new PrismaClient();
-if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+const adapter = new PrismaPg({ connectionString })
+const prisma = new PrismaClient({ adapter })
 
-export default prisma;
+export { prisma }

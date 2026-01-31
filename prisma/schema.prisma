@@ -1,62 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-enum Visibility {
-  PRIVATE
-  SHARED
-  PUBLIC
-}
-
-enum ShareStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
 }
 
 model User {
-  id         String    @id @default(uuid())
-  clerkId    String    @unique
-  username   String
-  name       String?
-  image      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id String @id @default(cuid())
+  clerkId String
+  username String
+  name String?
+  image String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  notes           Note[]
-  shareSent       NoteShare[] @relation("shareSender")
-  shareReceived   NoteShare[] @relation("shareReceiver")
-}
+  // realtions
 
-model Note {
-  id         String    @id @default(uuid())
-  authorId   String
-  title      String
-  content    String
-  icon       String?
-  color      String?
-  visibility Visibility @default(PRIVATE)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  // notes Note[]
+  // shareSent NoteShare[]
+  // shareReceived NoteShare[]
 
-  creator  User   @relation(fields: [authorId], references: [id])
-  shares   NoteShare[]
-}
+  // notifications Notification[] @relation("userNotification") // notifiations recieved by the user
+  // notificationsCreated Notification[] @relation("creatorNotification") // notifications created by the user
 
-model NoteShare {
-  id         String    @id @default(uuid())
-  noteId     String
-  senderId   String
-  receiverId String
-  status     ShareStatus @default(PENDING)
-  createdAt  DateTime    @default(now())
-
-  note     Note @relation(fields: [noteId], references: [id])
-  sender   User @relation("shareSender", fields: [senderId], references: [id])
-  receiver User @relation("shareReceiver", fields: [receiverId], references: [id])
 }
