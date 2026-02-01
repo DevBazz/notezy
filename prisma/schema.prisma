@@ -39,8 +39,9 @@ enum Type {
 
  model User {
   id String @id @default(cuid())
-  clerkId String
-  username String
+  clerkId String @unique
+  username String @unique
+  email String @unique
   name String?
   image String?
   createdAt DateTime @default(now())
@@ -55,8 +56,7 @@ enum Type {
   notifications Notification[] @relation("userNotification") // notifiations recieved by the user
   notificationsCreated Notification[] @relation("creatorNotification") // notifications created by the user
 
-  @@unique([username, clerkId])
-  @@index([username, clerkId])
+  
 }
 
 model Note {
@@ -66,7 +66,8 @@ model Note {
   content String
   icon String?
   color String?
-  visibility Visibility
+  visibility Visibility @default(PRIVATE)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -84,16 +85,17 @@ model NoteShare {
   senderId String
   receiverId String
 
-  status Status
-  permission Permission
+  status Status @default(PENDING)
+  permission Permission @default(VIEW)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  acceptedAt DateTime
+  acceptedAt DateTime?
 
   note Note @relation(fields: [noteId], references: [id])
   sender User @relation("userShare", fields: [senderId], references: [id])
   receiver User @relation("userReceived", fields: [receiverId], references: [id])
+  notifications Notification[]
 
   @@unique([noteId, receiverId])
   @@index([receiverId, status])
@@ -102,8 +104,8 @@ model NoteShare {
 
 model Notification {
   id String @id @default(cuid())
-  type Status
-  sharedNoteId Status
+  type Type
+  sharedNoteId String
   creatorId String
   receiverId String
   read Boolean @default(false)
@@ -113,6 +115,7 @@ model Notification {
 
   creator User @relation("creatorNotification", fields: [creatorId], references: [id])
   receiver User @relation("userNotification", fields: [receiverId], references: [id])
+  sharedNote NoteShare @relation(fields: [sharedNoteId], references: [id])
 
   @@index([receiverId, read, createdAt])
 }
