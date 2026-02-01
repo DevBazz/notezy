@@ -13,6 +13,30 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum Visibility {
+  PUBLIC
+  SHARED
+  PRIVATE
+}
+
+enum Permission {
+  VIEW
+  COMMENT
+  EDIT
+}
+
+enum Type {
+  SHARE_REQUEST
+  SHARE_ACCEPTED
+  SHARE_DECLINED
+}
+
  model User {
   id String @id @default(cuid())
   clerkId String
@@ -24,11 +48,71 @@ datasource db {
 
   // realtions
 
-  // notes Note[]
-  // shareSent NoteShare[]
-  // shareReceived NoteShare[]
+  notes Note[]
+  shareSent NoteShare[] @relation("userShare")
+  shareReceived NoteShare[] @relation("userReceived")
 
-  // notifications Notification[] @relation("userNotification") // notifiations recieved by the user
-  // notificationsCreated Notification[] @relation("creatorNotification") // notifications created by the user
+  notifications Notification[] @relation("userNotification") // notifiations recieved by the user
+  notificationsCreated Notification[] @relation("creatorNotification") // notifications created by the user
 
+  @@unique([username, clerkId])
+  @@index([username, clerkId])
+}
+
+model Note {
+  id String @id @default(cuid())
+  authorId String
+  title String
+  content String
+  icon String?
+  color String?
+  visibility Visibility
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // realtions
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  shared NoteShare[]
+
+  @@index([authorId, createdAt])
+}
+
+model NoteShare {
+  id String @id @default(cuid())
+  noteId String
+  senderId String
+  receiverId String
+
+  status Status
+  permission Permission
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  acceptedAt DateTime
+
+  note Note @relation(fields: [noteId], references: [id])
+  sender User @relation("userShare", fields: [senderId], references: [id])
+  receiver User @relation("userReceived", fields: [receiverId], references: [id])
+
+  @@unique([noteId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
+}
+
+model Notification {
+  id String @id @default(cuid())
+  type Status
+  sharedNoteId Status
+  creatorId String
+  receiverId String
+  read Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator User @relation("creatorNotification", fields: [creatorId], references: [id])
+  receiver User @relation("userNotification", fields: [receiverId], references: [id])
+
+  @@index([receiverId, read, createdAt])
 }
