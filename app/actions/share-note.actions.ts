@@ -1,10 +1,7 @@
 import prisma from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 
-export const ShareRequest = async (
-  noteId: string,
-  receiverId: string
-) => {
+export const shareRequest = async (noteId: string, receiverId: string) => {
   try {
     const user = await currentUser();
     if (!user) {
@@ -186,4 +183,55 @@ export const acceptShareRequest = async (shareId: string) => {
   }
 };
 
+export const rejectShareRequest = async (shareId: string) => {
+    try {
+        const user = await currentUser();
+        if(!user){
+            return { success: false, message: "Unauthorized" };
+        }
+        const share = await prisma.noteShare.findUnique({
+            where: { id: shareId },
+            select: {
+                id: true,
+                noteId: true,
+                receiverId: true,
+                senderId: true,
+                status: true,
+            },
+        });
 
+        if(!share){
+            return { success: false, message: "Share request not found" };
+        }
+
+        if(share.receiverId !== user.id){
+            return { success: false, message: "Unauthorized action" };
+        }
+
+        if(share.status !== "PENDING"){
+            return {
+                success: false,
+                message: `Cannot reject a ${share.status.toLowerCase()} request`,
+            };
+        }
+        await prisma.$transaction([
+        prisma.noteShare.update({
+            where: { id: shareId },
+            data: { status: "REJECTED" },
+        }),
+        prisma.notification.create({
+            data: {
+                sharedNoteId: share.noteId,
+                creatorId: user.id,
+                receiverId: share.senderId,
+                type: "SHARE_DECLINED",
+                read: false,
+            },
+        }),
+        ])
+        return { success: true, message: "Share request rejected successfully" };
+    } catch (error) {
+        console.error("Reject share request error:", error);
+        return { success: false, message: "Failed to reject share request" };
+    }
+}

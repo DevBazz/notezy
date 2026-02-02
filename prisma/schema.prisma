@@ -37,7 +37,7 @@ enum Type {
   SHARE_DECLINED
 }
 
- model User {
+model User {
   id String @id @default(cuid())
   clerkId String @unique
   username String @unique
