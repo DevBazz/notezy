@@ -1,0 +1,189 @@
+import prisma from "@/lib/prisma";
+import { currentUser } from "@clerk/nextjs/server";
+
+export const ShareRequest = async (
+  noteId: string,
+  receiverId: string
+) => {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return { success: false, message: "Unauthorized" };
+    }
+
+    // Prevent self-sharing
+    if (user.id === receiverId) {
+      return { success: false, message: "You cannot share a note with yourself" };
+    }
+
+    // Check receiver exists
+    const receiver = await prisma.user.findUnique({
+      where: { id: receiverId },
+      select: { id: true },
+    });
+
+    if (!receiver) {
+      return { success: false, message: "Receiver not found" };
+    }
+
+    // Check note exists AND user is the owner
+    const note = await prisma.note.findFirst({
+      where: {
+        id: noteId,
+        authorId: user.id,
+      },
+      select: { id: true },
+    });
+
+    if (!note) {
+      return {
+        success: false,
+        message: "Note not found or you are not the owner",
+      };
+    }
+
+    // Check existing share state
+    const existingShare = await prisma.noteShare.findUnique({
+      where: {
+        noteId_receiverId: {
+          noteId,
+          receiverId,
+        },
+      },
+    });
+
+    if (existingShare) {
+      if (existingShare.status === "PENDING") {
+        return {
+          success: false,
+          message: "Share request already pending",
+        };
+      }
+
+      if (existingShare.status === "ACCEPTED") {
+        return {
+          success: false,
+          message: "Note already shared with this user",
+        };
+      }
+
+      if (existingShare.status === "REJECTED") {
+        // optional: allow re-share by updating instead of creating
+        await prisma.noteShare.update({
+          where: { id: existingShare.id },
+          data: { status: "PENDING" },
+        });
+
+        await prisma.notification.create({
+          data: {
+            sharedNoteId: noteId,
+            creatorId: user.id,
+            receiverId,
+            type: "SHARE_REQUEST",
+            read: false,
+          },
+        });
+
+        return {
+          success: true,
+          message: "Share request sent again",
+        };
+      }
+    }
+
+    // Create new share request + notification atomically
+    await prisma.$transaction([
+      prisma.noteShare.create({
+        data: {
+          noteId,
+          senderId: user.id,
+          receiverId,
+          status: "PENDING",
+          permission: "VIEW", // explicit default
+        },
+      }),
+      prisma.notification.create({
+        data: {
+          sharedNoteId: noteId,
+          creatorId: user.id,
+          receiverId,
+          type: "SHARE_REQUEST",
+          read: false,
+        },
+      }),
+    ]);
+
+    return { success: true, message: "Share request sent successfully" };
+  } catch (error) {
+    console.error("Share request error:", error);
+    return { success: false, message: "Failed to send share request" };
+  }
+};
+
+
+export const acceptShareRequest = async (shareId: string) => {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return { success: false, message: "Unauthorized" };
+    }
+
+    const share = await prisma.noteShare.findUnique({
+      where: { id: shareId },
+      select: {
+        id: true,
+        noteId: true,
+        receiverId: true,
+        senderId: true,
+        status: true,
+      },
+    });
+
+    if (!share) {
+      return { success: false, message: "Share request not found" };
+    }
+
+    // Only receiver can accept
+    if (share.receiverId !== user.id) {
+      return { success: false, message: "Unauthorized action" };
+    }
+
+    // Only PENDING requests can be accepted
+    if (share.status !== "PENDING") {
+      return {
+        success: false,
+        message: `Cannot accept a ${share.status.toLowerCase()} request`,
+      };
+    }
+
+    await prisma.$transaction([
+      prisma.noteShare.update({
+        where: { id: shareId },
+        data: {
+          status: "ACCEPTED",
+          acceptedAt: new Date(),
+        },
+      }),
+
+      prisma.notification.create({
+        data: {
+          sharedNoteId: share.noteId, // keep meaning consistent
+          creatorId: user.id,         // receiver accepted
+          receiverId: share.senderId, // notify sender
+          type: "SHARE_ACCEPTED",
+          read: false,
+        },
+      }),
+    ]);
+
+    return {
+      success: true,
+      message: "Share request accepted successfully",
+    };
+  } catch (error) {
+    console.error("Accept share request error:", error);
+    return { success: false, message: "Failed to accept share request" };
+  }
+};
+
+
