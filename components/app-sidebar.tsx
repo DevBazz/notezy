@@ -4,27 +4,26 @@ import { BellIcon, HomeIcon, NotebookIcon, UserIcon } from 'lucide-react'
 import ToggleTheme from './toggle-theme'
 import { Separator } from './ui/separator'
 import Link from 'next/link'
-import { SignIn, UserButton } from '@clerk/nextjs'
-import { auth } from '@clerk/nextjs/server'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+
+import ClerkUser from './clerk-user'
+
+
 
 const AppSidebar = async () => {
 
-    const user  = await auth()
-
 const sidebarItems = [
     { name: 'Home',
-      icon: <HomeIcon size={25} className='mr-2 inline-block'/>,
+      icon: <HomeIcon size={20} className='mr-2 inline-block'/>,
       href: '/'
     },
     {
         name: 'Shared with me',
-        icon: <UserIcon size={25} className='mr-2 inline-block'/>,
+        icon: <UserIcon size={20} className='mr-2 inline-block'/>,
         href: '/shared'
     },
     {
         name: 'Notifications',
-        icon: <BellIcon size={25} className='mr-2 inline-block'/>,
+        icon: <BellIcon size={20} className='mr-2 inline-block'/>,
         href: '/notifications'
     }
 ]
@@ -44,10 +43,10 @@ const sidebarItems = [
         <SidebarContent>
             <SidebarGroup>
                 <SidebarMenu>
-                    <ul className='flex items-center justify-center flex-col space-y-4 mt-4 gap-2'>
+                    <ul className='flex items-center justify-center flex-col space-y-4 mt-2 gap-2'>
                         {sidebarItems.map((item) => (
                             <li key={item.name} className='w-full'>
-                                <Link href={item.href} className='text-lg flex gap-2 items-center  hover:text-gray-400'>
+                                <Link href={item.href} className='text-sm flex items-center  hover:text-gray-400'>
                                     {item.icon}
                                     {item.name}
                                 </Link>
@@ -58,18 +57,9 @@ const sidebarItems = [
             </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className='border-2 rounded-lg mx-2 my-2 h-17 w-60 '>
-            <div className='mb-4 mt-2 flex gap-2 items-center'>
-              <Avatar className='h-full'>
-                <AvatarImage src='/next.svg'/>
-                <AvatarFallback>BI</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className='text-sm'>Bazan Iqbal</h3>
-                <p className='text-sm text-gray-500'>bazan@example.com</p>
-              </div>  
-            </div>
-        </SidebarFooter>
+                <SidebarFooter className='  '>
+                    <ClerkUser />
+                </SidebarFooter>
     </Sidebar>
   )
 }

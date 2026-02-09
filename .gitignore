@@ -48,3 +48,6 @@ MVP.txt
 /lib/generated/prisma
 
 .vercel
+
+# clerk configuration (can include secrets)
+/.clerk/

@@ -1,8 +1,17 @@
+import CreateNote from '@/components/create-note'
+import {   currentUser } from '@clerk/nextjs/server'
 import React from 'react'
 
-const page = () => {
+
+const page = async() => {
+ 
+  const user = await currentUser();
+  
+   
   return (
-    <div></div>
+    <section>
+      {user && <CreateNote userId={user.id}/>}
+    </section>
   )
 }
 
