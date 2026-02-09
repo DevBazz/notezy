@@ -1,19 +1,38 @@
-'use client'
+"use client";
 import { useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { LoaderIcon, PlusIcon, Star, Heart, Bookmark, Tag, Bell, Folder, FileText, Camera, Sun, Moon } from "lucide-react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import {
+  LoaderIcon,
+  PlusIcon,
+  Star,
+  Heart,
+  Bookmark,
+  Tag,
+  Bell,
+  Folder,
+  FileText,
+  Camera,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { Field, FieldGroup } from "./ui/field";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { User } from "@clerk/nextjs/server";
 import { createNote } from "@/app/actions/note.actions";
+import toast from "react-hot-toast";
 
-
-const CreateNote = ({ userId }: { userId: string }) => {
-
-    const Icon = [
+const CreateNote = () => {
+  const Icon = [
     { name: "Star", Icon: Star },
     { name: "Heart", Icon: Heart },
     { name: "Bookmark", Icon: Bookmark },
@@ -24,90 +43,137 @@ const CreateNote = ({ userId }: { userId: string }) => {
     { name: "Camera", Icon: Camera },
     { name: "Sun", Icon: Sun },
     { name: "Moon", Icon: Moon },
-    ]
-  
+  ];
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string>("Star");
+  const [open, setOpen] = useState(false);
 
   const handleSubmit = async (formData: FormData) => {
     try {
-        setIsSubmitting(true);
-        const data = {
-            title: formData.get("title") as string,
-            content: formData.get("note") as string,
-            icon: formData.get("icon") as string,
-            color: formData.get("color") as string,
-            userId: userId
-        }
-        await createNote(data)
+      setIsSubmitting(true);
+      const data = {
+        title: formData.get("title") as string,
+        content: formData.get("note") as string,
+        icon: selectedIcon, 
+        color: formData.get("color") as string,
+      };
+      
+      // Validation
+      if (!data.title.trim() || !data.content.trim()) {
+        toast.error("Please fill in all required fields");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      await createNote(data);
+      toast.success("Note created successfully!");
+      setOpen(false);
+      
+      
+      const form = document.getElementById("create-note-form") as HTMLFormElement;
+      if (form) form.reset();
+      setSelectedIcon("Star"); // Reset icon to default
+      
     } catch (error) {
-        
+      console.error("Error creating note:", error);
+      toast.error("Error creating note. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-  }
-  
+  };
 
   return (
     <section className="my-4">
-      <Dialog>
-        <form action={handleSubmit}>
-          <DialogTrigger asChild>
-            <Button className="w-20 h-16 bg-neutral-800 flex justify-center items-center cursor-pointer">
-              <PlusIcon className="text-white" size={25} />
-            </Button>
-          </DialogTrigger>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-20 h-16 bg-neutral-800 flex justify-center items-center cursor-pointer">
+            <PlusIcon className="text-white" size={25} />
+          </Button>
+        </DialogTrigger>
 
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Create a New Note</DialogTitle>
-            </DialogHeader>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Create a New Note</DialogTitle>
+          </DialogHeader>
+          
+          <form id="create-note-form" action={handleSubmit}>
             <FieldGroup>
               <Field>
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" name="title" placeholder="Title" />
+                <Label htmlFor="title">Title *</Label>
+                <Input 
+                  id="title" 
+                  name="title" 
+                  placeholder="Title" 
+                  required
+                />
               </Field>
               <Field>
-                <Label htmlFor="note">Note</Label>
-                <Textarea id="note" name="note" />
+                <Label htmlFor="note">Note *</Label>
+                <Textarea id="note" name="note" required />
               </Field>
               <Field>
                 <Label>Pick an Icon</Label>
-                  <input type="hidden" name="icon" value={selectedIcon} />
-                  <div className="mt-2">
-                    <div className="grid grid-cols-5 gap-2">
-                      {
-                      Icon.map(({ name, Icon }) => {
-                        const isSelected = selectedIcon === name;
-                        return (
-                          <button
-                            type="button"
-                            key={name}
-                            onClick={() => setSelectedIcon(name)}
-                            aria-pressed={isSelected}
-                            className={`flex items-center justify-center p-2 rounded-md border ${isSelected ? 'bg-neutral-700 border-neutral-600' : 'bg-transparent border-neutral-800 hover:bg-neutral-900'} transition-colors`}
-                          >
-                            <Icon size={18} className={isSelected ? 'text-white' : 'text-neutral-300'} />
-                          </button>
-                        );
-                      })}
-                    </div>
+                <input type="hidden" name="icon" value={selectedIcon} />
+                <div className="mt-2">
+                  <div className="grid grid-cols-5 gap-2">
+                    {Icon.map(({ name, Icon }) => {
+                      const isSelected = selectedIcon === name;
+                      return (
+                        <button
+                          type="button"
+                          key={name}
+                          onClick={() => setSelectedIcon(name)}
+                          aria-pressed={isSelected}
+                          className={`flex items-center justify-center p-2 rounded-md border ${isSelected ? "bg-neutral-700 border-neutral-600" : "bg-transparent border-neutral-800 hover:bg-neutral-900"} transition-colors`}
+                        >
+                          <Icon
+                            size={18}
+                            className={
+                              isSelected ? "text-white" : "text-neutral-300"
+                            }
+                          />
+                        </button>
+                      );
+                    })}
                   </div>
+                </div>
               </Field>
               <Field>
                 <Label htmlFor="color">Pick a Color</Label>
-                <Input type="color" id="color" name="color" defaultValue="#ffffff" />
+                <Input
+                  type="color"
+                  id="color"
+                  name="color"
+                  defaultValue="#ffffff"
+                />
               </Field>
             </FieldGroup>
-            <DialogFooter>
+            <DialogFooter className="mt-4">
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="cursor-pointer"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
               </DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <LoaderIcon className="animate-spin"/> : "Save"}
+              <Button 
+                className="cursor-pointer" 
+                type="submit" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <LoaderIcon className="animate-spin" />
+                ) : (
+                  "Save"
+                )}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </form>
+          </form>
+        </DialogContent>
       </Dialog>
     </section>
   );

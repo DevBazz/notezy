@@ -1,5 +1,8 @@
+'use server'
 import prisma from "@/lib/prisma"
 import { currentUser } from "@clerk/nextjs/server"
+import { getDbUserId } from "./user.actions";
+import { revalidatePath } from "next/cache";
 
 interface CreateNoteProps {
     title: string;
@@ -47,8 +50,11 @@ export const getNotesById = async (noteId: string) => {
 
 export const createNote = async (data: CreateNoteProps) => {
    try {
-    const user = await currentUser()
-    if(!user) return null
+    const userId = await getDbUserId();
+
+    if (!userId) {
+      return {success: false, error: "User not authenticated"}
+    }
 
     const newNote = await prisma.note.create({
       data: {
@@ -56,10 +62,11 @@ export const createNote = async (data: CreateNoteProps) => {
         content: data.content,
         icon: data.icon,
         color: data.color,
-        authorId: user.id
+        authorId: userId
       }
     })
-    return newNote;
+    revalidatePath('/')
+    return { success: true, note: newNote };
    } catch (error) {
     console.log("Error creating note:", error)
     return {success: false, message: "Error creating note"}
