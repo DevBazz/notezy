@@ -4,7 +4,7 @@ import { currentUser } from "@clerk/nextjs/server"
 import { getDbUserId } from "./user.actions";
 import { revalidatePath } from "next/cache";
 
-interface CreateNoteProps {
+export interface CreateNoteProps {
     title: string;
     content: string;
     icon?: string;
@@ -14,17 +14,19 @@ interface CreateNoteProps {
 export const getAllNotes = async () => {
   try {
     const user = await currentUser()
-    if(!user) return null
+    if(!user) return {success: false, message: "User not authenticated"}
+
+    const userId = await getDbUserId();
     
     const notes = await prisma.note.findMany({
         where: {
-            authorId: user.id
+            authorId: userId
         },
         orderBy: {
             createdAt: 'desc'
         }
     })
-    return notes;
+    return {success: true, notes};
   } catch (error) {
     console.log("Error fetching notes:", error)
     return {success: false, message: "Error fetching notes"}

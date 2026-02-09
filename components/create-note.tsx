@@ -59,7 +59,6 @@ const CreateNote = () => {
         color: formData.get("color") as string,
       };
       
-      // Validation
       if (!data.title.trim() || !data.content.trim()) {
         toast.error("Please fill in all required fields");
         setIsSubmitting(false);
@@ -71,9 +70,8 @@ const CreateNote = () => {
       setOpen(false);
       
       
-      const form = document.getElementById("create-note-form") as HTMLFormElement;
-      if (form) form.reset();
-      setSelectedIcon("Star"); // Reset icon to default
+      
+      setSelectedIcon("Star"); 
       
     } catch (error) {
       console.error("Error creating note:", error);
@@ -87,8 +85,8 @@ const CreateNote = () => {
     <section className="my-4">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button className="w-20 h-16 bg-neutral-800 flex justify-center items-center cursor-pointer">
-            <PlusIcon className="text-white" size={25} />
+          <Button className="w-20 h-16 bg-neutral-800 hover:bg-neutral-400 flex justify-center items-center cursor-pointer ">
+            <PlusIcon className="text-white hover:text-black" size={25} />
           </Button>
         </DialogTrigger>
 
@@ -97,7 +95,7 @@ const CreateNote = () => {
             <DialogTitle>Create a New Note</DialogTitle>
           </DialogHeader>
           
-          <form id="create-note-form" action={handleSubmit}>
+          <form  action={handleSubmit}>
             <FieldGroup>
               <Field>
                 <Label htmlFor="title">Title *</Label>

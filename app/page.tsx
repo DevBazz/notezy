@@ -1,15 +1,25 @@
 import CreateNote from '@/components/create-note'
 import { currentUser } from '@clerk/nextjs/server'
-import { syncUser } from '@/app/actions/user.actions'
-import React from 'react'
+import { getDbUserId, syncUser } from '@/app/actions/user.actions'
+import { getAllNotes } from './actions/note.actions'
+import NoteCard from '@/components/note-card'
+
 
 const page = async () => {
   const user = await currentUser();
-  await syncUser(); 
+  await syncUser();
+  const {notes} = await getAllNotes();
+  const userId = await getDbUserId();
   
   return (
-    <section>
+    <section className='flex flex-wrap  gap-3'>
       {user && <CreateNote />}
+       
+       <div>
+         { notes?.map((note) => (
+          <NoteCard key={note.id} note={note}/>
+        ))}
+       </div>
     </section>
   )
 }
