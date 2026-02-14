@@ -1,7 +1,9 @@
 import { Trash2, Share2 } from "lucide-react";
 import { Button } from "./ui/button";
-import { Card, CardHeader, CardContent } from "./ui/card";
+import { Card, CardHeader, CardContent, CardFooter } from "./ui/card";
 import { Icons } from "@/utils/Icons";
+import { Separator } from "./ui/separator";
+import Link from "next/link";
 
 type Note = {
   id: string;
@@ -10,8 +12,6 @@ type Note = {
   icon: string | null;
   color: string | null;
 };
-
- 
 
 const NoteCard = ({ note }: { note: Note }) => {
 
@@ -26,39 +26,78 @@ const NoteCard = ({ note }: { note: Note }) => {
 
   return (
     <Card
-      className="w-52 h-56 rounded-2xl shadow-md border-2 "
-      style={{
-        
-        boxShadow: `0 8px 20px -6px ${note.color}40`,
-      }}
-    >
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="flex items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl ">
-            {Icon && <Icon className="h-5 w-5" />}
-          </div>
-          <h3 className="text-lg font-semibold truncate max-w-45">
-            {note.title}
-          </h3>
-        </div>
-      </CardHeader>
+  className="group relative w-56 h-64 rounded-3xl border border-border/40 
+             bg-linear-to-br from-background to-muted/40 
+             shadow-sm hover:shadow-xl 
+             transition-all duration-300 hover:-translate-y-2"
+  style={{
+    boxShadow: note.color
+      ? `0 10px 25px -8px ${note.color}60`
+      : undefined,
+  }}
+>
 
-      <CardContent>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {previewContent}
-        </p>
+  {/* CLICKABLE AREA */}
+  <Link href={`note/${note.id}`} className="block">
+    <CardHeader className="flex items-center gap-3 px-4 pt-4 pb-3">
+      
+      {/* Icon */}
+      <div
+        className="flex h-11 w-11 shrink-0 items-center justify-center 
+                   rounded-2xl shadow-sm transition-all duration-300 
+                   group-hover:scale-105"
+        style={{
+          backgroundColor: note.color ? `${note.color}20` : undefined,
+        }}
+      >
+        {Icon && (
+          <Icon
+            className="h-5 w-5"
+            style={{ color: note.color ?? undefined }}
+          />
+        )}
+      </div>
 
-        <div className="mt-6 flex items-center justify-end gap-2">
-          <Button variant="ghost" size="icon" className="rounded-xl">
-            <Share2 className="h-4 w-4" />
-          </Button>
+      {/* Title */}
+      <h3 className="text-lg font-semibold truncate leading-tight">
+        {note.title}
+      </h3>
+    </CardHeader>
 
-          <Button variant="ghost" size="icon" className="rounded-xl">
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <Separator />
+
+    <CardContent className="px-4 pt-3 pb-2">
+      <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
+        {previewContent}
+      </p>
+    </CardContent>
+  </Link>
+
+  {/* ACTIONS — NOT CLICKABLE LINK */}
+  <CardFooter className="px-4 pb-4 pt-2">
+    <div className="flex items-center justify-end gap-2 w-full 
+                    opacity-70 group-hover:opacity-100 
+                    transition-opacity duration-300">
+      
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-xl hover:bg-muted transition"
+      >
+        <Share2 className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition"
+      >
+        <Trash2 className="h-4 w-4 text-red-500" />
+      </Button>
+
+    </div>
+  </CardFooter>
+</Card>
   );
 };
 

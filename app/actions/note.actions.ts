@@ -36,14 +36,14 @@ export const getAllNotes = async () => {
 export const getNotesById = async (noteId: string) => {
     try {
        const user = await currentUser()
-       if(!user) return null
+       if(!user) return {success: false, message: "Not authorized"}
        
        const note = await prisma.note.findUnique({
         where: {
             id: noteId,
         }
        })
-       return note;
+       return {success: true, note};
     } catch (error) {
         console.log("Error fetching note by ID:", error)
         return {success: false, message: "Error fetching note by ID"}
