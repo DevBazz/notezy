@@ -11,39 +11,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import {
-  LoaderIcon,
-  PlusIcon,
-  Star,
-  Heart,
-  Bookmark,
-  Tag,
-  Bell,
-  Folder,
-  FileText,
-  Camera,
-  Sun,
-  Moon,
-} from "lucide-react";
+import { LoaderIcon, PlusIcon, } from "lucide-react"; 
 import { Field, FieldGroup } from "./ui/field";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { createNote } from "@/app/actions/note.actions";
 import toast from "react-hot-toast";
+import {Icons} from "@/utils/Icons"
 
 const CreateNote = () => {
-  const Icon = [
-    { name: "Star", Icon: Star },
-    { name: "Heart", Icon: Heart },
-    { name: "Bookmark", Icon: Bookmark },
-    { name: "Tag", Icon: Tag },
-    { name: "Bell", Icon: Bell },
-    { name: "Folder", Icon: Folder },
-    { name: "FileText", Icon: FileText },
-    { name: "Camera", Icon: Camera },
-    { name: "Sun", Icon: Sun },
-    { name: "Moon", Icon: Moon },
-  ];
+ 
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string>("Star");
@@ -115,7 +92,7 @@ const CreateNote = () => {
                 <input type="hidden" name="icon" value={selectedIcon} />
                 <div className="mt-2">
                   <div className="grid grid-cols-5 gap-2">
-                    {Icon.map(({ name, Icon }) => {
+                    {Icons.map(({ name, Icon }) => {
                       const isSelected = selectedIcon === name;
                       return (
                         <button
