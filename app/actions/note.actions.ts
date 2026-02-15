@@ -51,7 +51,7 @@ export const getNotesById = async (noteId: string) => {
           }
         }
        })
-       return {success: true, note};
+       return {success: true, note, message: "Note fetched successfully"};
     } catch (error) {
         console.log("Error fetching note by ID:", error)
         return {success: false, message: "Error fetching note by ID"}
@@ -106,7 +106,6 @@ export const updateNoteById = async (noteId: string, data: CreateNoteProps) => {
     return {success: false, message: "Error updating note"}
   }
 }
-
 
 
 export const deleteNote = async (noteId: string) => {

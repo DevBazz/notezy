@@ -33,13 +33,13 @@ export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
       const result = await deleteNote(noteId);
 
       if (result.success) {
-        toast.success("Note deleted successfully!");
-        router.push("/");
-        router.refresh();
+          router.push("/");
+          router.refresh();
+          toast.success("Note deleted successfully!");
       } 
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("Something went wrong.");
+      toast.error("Failed to delete the note. Please try again.");
     } finally {
       setIsDeleting(false);
     }

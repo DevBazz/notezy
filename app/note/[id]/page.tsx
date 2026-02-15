@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import {
   Card,
   CardHeader,
@@ -7,24 +11,81 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Share2, } from "lucide-react";
-import { getNotesById } from "@/app/actions/note.actions";
+import { Share2 } from "lucide-react";
+import { getNotesById, updateNoteById } from "@/app/actions/note.actions";
 import { Icons } from "@/utils/Icons";
 import DeleteAlertDialog from "@/components/delete-alert-box";
+import toast from "react-hot-toast";
 
-const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
+interface Note {
+  id: string;
+  title: string;
+  content: string;
+  icon?: string;
+  color?: string;
+}
+
+const NotePage = () => {
+  const params = useParams();
+  const noteId = params.id as string;
   
-  const resolvedParams = await params;
-  const noteId = resolvedParams.id;
+  const [note, setNote] = useState<Note | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  
+  useEffect(() => {
+    const fetchNote = async () => {
+      try {
+        const data = await getNotesById(noteId);
+        setNote(data.note);
+        setTitle(data.note?.title || "");
+        setContent(data.note?.content || "");
+      } catch (error) {
+        console.error("Error fetching note:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const data = await getNotesById(noteId);
-  const note = data.note;
+    if (noteId) {
+      fetchNote();
+    }
+  }, [noteId]);
+
+
+  const handleUpdate = async () => {
+      try {
+        if(title === note?.title && content === note?.content) {
+          return;
+        }
+ 
+       await updateNoteById(noteId, { title, content });
+       toast.success("Saved");      
+      } catch (error) {
+        toast.error("Error updating note. Please try again.");
+        console.error("Error updating note:", error);
+      }
+  }
 
   const selectedIcon = Icons.find((icon) => icon.name === note?.icon);
   const Icon = selectedIcon?.Icon;
 
+  if (loading) {
+    return (
+      <section className="max-w-3xl mx-auto mt-10 px-4">
+        <p>Loading...</p>
+      </section>
+    );
+  }
 
-  if (!note) return <p>Note not found</p>;
+  if (!note) {
+    return (
+      <section className="max-w-3xl mx-auto mt-10 px-4">
+        <p>Note not found</p>
+      </section>
+    );
+  }
 
   return (
     <section className="max-w-3xl mx-auto mt-10 px-4">
@@ -56,18 +117,22 @@ const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* Editable Title */}
           <Input
-            defaultValue={note.title}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="text-xl font-semibold flex-1 border-none"
             placeholder="Note Title"
+            onBlur={() => handleUpdate}
           />
         </CardHeader>
 
         <CardContent className="px-6 pt-3 pb-4">
           {/* Editable Content */}
           <Textarea
-            defaultValue={note.content}
-            className="text-sm  min-h-50 resize-none border-none"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="text-sm min-h-50 resize-none border-none"
             placeholder="Write your note..."
+            onBlur={() => handleUpdate}
           />
         </CardContent>
 
