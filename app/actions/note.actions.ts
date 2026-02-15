@@ -41,6 +41,14 @@ export const getNotesById = async (noteId: string) => {
        const note = await prisma.note.findUnique({
         where: {
             id: noteId,
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+            }
+          }
         }
        })
        return {success: true, note};
@@ -99,20 +107,29 @@ export const updateNoteById = async (noteId: string, data: CreateNoteProps) => {
   }
 }
 
-export const deleteNoteById = async (noteId: string) => {
-  try {
-    const user = await currentUser()
-    if(!user) return null
 
-    const deletedNote = await prisma.note.deleteMany({
-      where: {
-        id: noteId,
-        authorId: user.id
-      }
-    })
-    return deletedNote;
-  } catch (error) {
-    console.log("Error deleting note by ID:", error)
-    return {success: false, message: "Error deleting note"}
+
+export const deleteNote = async (noteId: string) => {
+  const user = await currentUser();
+  if (!user) return { success: false, message: "Unauthorized" };
+
+  const userId = await getDbUserId();
+  const dbUser = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!dbUser) {
+    return { success: false, message: "User not found" };
   }
-}
+
+  await prisma.note.delete({
+    where: {
+      id: noteId,
+      authorId: userId,
+    },
+  });
+
+  return { success: true };
+};

@@ -1,20 +1,27 @@
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Share2, Trash2 } from "lucide-react";
 import { getNotesById } from "@/app/actions/note.actions";
-
-
+import { Icons } from "@/utils/Icons";
 
 const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
+  
   const resolvedParams = await params;
   const noteId = resolvedParams.id;
 
-  
-
   const data = await getNotesById(noteId);
   const note = data.note;
+
+  const selectedIcon = Icons.find((icon) => icon.name === note?.icon);
+  const Icon = selectedIcon?.Icon;
+
 
   if (!note) return <p>Note not found</p>;
 
@@ -25,7 +32,9 @@ const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
                    bg-linear-to-br from-background to-muted/40 
                    transition-all duration-300"
         style={{
-          boxShadow: note.color ? `0 12px 30px -10px ${note.color}40` : undefined,
+          boxShadow: note.color
+            ? `0 12px 30px -10px ${note.color}40`
+            : undefined,
         }}
       >
         <CardHeader className="flex items-center gap-4 px-6 pt-6 pb-2">
@@ -36,13 +45,18 @@ const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
               backgroundColor: note.color ? `${note.color}20` : undefined,
             }}
           >
-            {/* {note.icon && <note.icon className="h-6 w-6" style={{ color: note.color }} />} */}
+            {Icon && (
+              <Icon
+                className="h-5 w-5"
+                style={{ color: note.color ?? undefined }}
+              />
+            )}
           </div>
 
           {/* Editable Title */}
           <Input
             defaultValue={note.title}
-            className="text-xl font-semibold flex-1"
+            className="text-xl font-semibold flex-1 border-none"
             placeholder="Note Title"
           />
         </CardHeader>
@@ -51,7 +65,7 @@ const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
           {/* Editable Content */}
           <Textarea
             defaultValue={note.content}
-            className="text-sm text-muted-foreground min-h-50 resize-none"
+            className="text-sm  min-h-50 resize-none border-none"
             placeholder="Write your note..."
           />
         </CardContent>
