@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteNote } from "@/app/actions/note.actions";
+import toast from "react-hot-toast";
 
 interface DeleteAlertDialogProps {
   noteId: string;
@@ -32,11 +33,10 @@ export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
       const result = await deleteNote(noteId);
 
       if (result.success) {
+        toast.success("Note deleted successfully!");
         router.push("/");
         router.refresh();
-      } else {
-        alert(result.message);
-      }
+      } 
     } catch (error) {
       console.error("Delete failed:", error);
       alert("Something went wrong.");

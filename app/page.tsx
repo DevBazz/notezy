@@ -12,10 +12,10 @@ const page = async () => {
   const userId = await getDbUserId();
   
   return (
-    <section className='flex flex-wrap  gap-3'>
+    <section className='w-full flex flex-col gap-6'>
       {user && <CreateNote />}
        
-       <div>
+       <div className='w-full flex flex-wrap gap-3 flex-row'>
          { notes?.map((note) => (
           <NoteCard key={note.id} note={note}/>
         ))}

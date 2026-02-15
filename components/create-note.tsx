@@ -27,8 +27,8 @@ const CreateNote = () => {
   const [open, setOpen] = useState(false);
 
   const handleSubmit = async (formData: FormData) => {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       const data = {
         title: formData.get("title") as string,
         content: formData.get("note") as string,
@@ -45,8 +45,6 @@ const CreateNote = () => {
       await createNote(data);
       toast.success("Note created successfully!");
       setOpen(false);
-      
-      
       
       setSelectedIcon("Star"); 
       
