@@ -121,7 +121,7 @@ const NotePage = () => {
             onChange={(e) => setTitle(e.target.value)}
             className="text-xl font-semibold flex-1 border-none"
             placeholder="Note Title"
-            onBlur={() => handleUpdate}
+            onBlur={() => handleUpdate()}
           />
         </CardHeader>
 
@@ -132,7 +132,7 @@ const NotePage = () => {
             onChange={(e) => setContent(e.target.value)}
             className="text-sm min-h-50 resize-none border-none"
             placeholder="Write your note..."
-            onBlur={() => handleUpdate}
+            onBlur={() => handleUpdate()}
           />
         </CardContent>
 

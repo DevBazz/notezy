@@ -87,11 +87,12 @@ export const updateNoteById = async (noteId: string, data: CreateNoteProps) => {
   try {
     const user = await currentUser()
     if(!user) return null
+    const userId = await getDbUserId();
 
     const updatedNote = await prisma.note.updateMany({
       where: {
         id: noteId,
-        authorId: user.id
+        authorId: userId
       },
       data: {
         title: data.title,
