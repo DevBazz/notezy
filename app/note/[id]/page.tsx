@@ -21,8 +21,8 @@ interface Note {
   id: string;
   title: string;
   content: string;
-  icon?: string;
-  color?: string;
+  icon?: string | null;
+  color?: string | null;
 }
 
 const NotePage = () => {
@@ -38,9 +38,14 @@ const NotePage = () => {
     const fetchNote = async () => {
       try {
         const data = await getNotesById(noteId);
-        setNote(data.note);
-        setTitle(data.note?.title || "");
-        setContent(data.note?.content || "");
+        if (data.note) {
+          const { id, title, content, icon, color } = data.note;
+          setNote({ id, title, content, icon, color });
+          setTitle(title || "");
+          setContent(content || "");
+        } else {
+          setNote(null);
+        }
       } catch (error) {
         console.error("Error fetching note:", error);
       } finally {
