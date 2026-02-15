@@ -7,9 +7,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Share2, Trash2 } from "lucide-react";
+import { Share2, } from "lucide-react";
 import { getNotesById } from "@/app/actions/note.actions";
 import { Icons } from "@/utils/Icons";
+import DeleteAlertDialog from "@/components/delete-alert-box";
 
 const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
   
@@ -74,9 +75,7 @@ const NotePage = async ({ params }: { params: Promise<{ id: string }> }) => {
           <Button variant="ghost" size="icon" className="rounded-xl">
             <Share2 className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-xl">
-            <Trash2 className="h-5 w-5 text-red-500" />
-          </Button>
+          <DeleteAlertDialog noteId={note.id} />
         </CardFooter>
       </Card>
     </section>
