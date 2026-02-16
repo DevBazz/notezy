@@ -130,6 +130,6 @@ export const deleteNote = async (noteId: string) => {
       authorId: userId,
     },
   });
-
+  revalidatePath('/')
   return { success: true };
 };

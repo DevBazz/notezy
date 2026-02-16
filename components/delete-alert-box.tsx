@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +22,7 @@ interface DeleteAlertDialogProps {
 }
 
 export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
-  const router = useRouter();
+  
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -31,12 +30,8 @@ export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
       setIsDeleting(true);
 
       const result = await deleteNote(noteId);
-
-      if (result.success) {
-          router.push("/");
-          router.refresh();
-          toast.success("Note deleted successfully!");
-      } 
+      toast.success("Note deleted successfully!");
+      
     } catch (error) {
       console.error("Delete failed:", error);
       toast.error("Failed to delete the note. Please try again.");
