@@ -1,6 +1,7 @@
 'use server'
 import prisma from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
+import { getDbUserId } from "./user.actions";
 
 export const shareRequest = async (noteId: string, receiverId: string) => {
   try {
@@ -9,8 +10,14 @@ export const shareRequest = async (noteId: string, receiverId: string) => {
       return { success: false, message: "Unauthorized" };
     }
 
+    const userId = await getDbUserId();
+
+    if (!userId) {
+      return { success: false, message: "User ID not found" };
+    }
+
     // Prevent self-sharing
-    if (user.id === receiverId) {
+    if (userId === receiverId) {
       return { success: false, message: "You cannot share a note with yourself" };
     }
 
@@ -28,7 +35,7 @@ export const shareRequest = async (noteId: string, receiverId: string) => {
     const note = await prisma.note.findFirst({
       where: {
         id: noteId,
-        authorId: user.id,
+        authorId: userId
       },
       select: { id: true },
     });
@@ -90,26 +97,30 @@ export const shareRequest = async (noteId: string, receiverId: string) => {
     }
 
     // Create new share request + notification atomically
-    await prisma.$transaction([
-      prisma.noteShare.create({
+        // Create new share request + notification atomically
+    const result = await prisma.$transaction(async (tx) => {
+      const noteShare = await tx.noteShare.create({
         data: {
           noteId,
-          senderId: user.id,
+          senderId: userId,
           receiverId,
           status: "PENDING",
-          permission: "VIEW", // explicit default
+          permission: "VIEW",
         },
-      }),
-      prisma.notification.create({
+      });
+
+      await tx.notification.create({
         data: {
-          sharedNoteId: noteId,
-          creatorId: user.id,
+          sharedNoteId: noteShare.id,
+          creatorId: userId,
           receiverId,
           type: "SHARE_REQUEST",
           read: false,
         },
-      }),
-    ]);
+      });
+
+      return noteShare;
+    });
 
     return { success: true, message: "Share request sent successfully" };
   } catch (error) {
@@ -117,6 +128,7 @@ export const shareRequest = async (noteId: string, receiverId: string) => {
     return { success: false, message: "Failed to send share request" };
   }
 };
+
 
 
 export const acceptShareRequest = async (shareId: string) => {

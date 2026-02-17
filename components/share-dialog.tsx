@@ -14,6 +14,7 @@ import { Share2, Loader2, Check } from "lucide-react";
 import { getAllUsers } from "@/app/actions/user.actions";
 import { shareRequest } from "@/app/actions/share-note.actions";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 interface User {
   id: string;
@@ -35,14 +36,23 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [sharing, setSharing] = useState(false);
 
-  // Fetch all users when dialog opens
+  // Fetch users when dialog opens
   useEffect(() => {
-    if (open && users.length === 0) {
+    if (open) {
       fetchUsers();
+    } else {
+      setSelectedUsers(new Set());
+      setSearchQuery("");
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]); //
 
   const fetchUsers = async () => {
+    // Don't fetch if already have users and not loading
+    if (users.length > 0) {
+      return;
+    }
+
     try {
       setLoading(true);
       const fetchedUsers = await getAllUsers();
@@ -56,10 +66,12 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
   };
 
   // Filter users based on search query
-  const filteredUsers = users.filter((user) =>
-    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredUsers = users.filter(
+    (user) =>
+      user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.name &&
+        user.name.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   // Toggle user selection
@@ -73,7 +85,7 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
     setSelectedUsers(newSelected);
   };
 
-  // Share note with selected users
+    // Share note with selected users
   const handleShare = async () => {
     if (selectedUsers.size === 0) {
       toast.error("Please select at least one user");
@@ -83,32 +95,39 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
     try {
       setSharing(true);
       const sharePromises = Array.from(selectedUsers).map((userId) =>
-        shareRequest(noteId, userId)
+        shareRequest(noteId, userId),
       );
 
       const results = await Promise.all(sharePromises);
+
+      // Log results for debugging
+      console.log("Share results:", results);
 
       // Check if all shares were successful
       const allSuccess = results.every((result) => result.success);
 
       if (allSuccess) {
         toast.success(
-          `Note shared with ${selectedUsers.size} user${selectedUsers.size > 1 ? "s" : ""}`
+          `Note shared with ${selectedUsers.size} user${selectedUsers.size > 1 ? "s" : ""}`,
         );
         setSelectedUsers(new Set());
-        setSearchQuery("");
         setOpen(false);
       } else {
         // Handle partial failures
         const failedCount = results.filter((r) => !r.success).length;
-        if (failedCount === results.length) {
-          toast.error("Failed to share note");
-        } else {
+        const successCount = results.length - failedCount;
+        
+        results.forEach((result) => {
+          if (!result.success) {
+            toast.error(result.message || "Failed to share with a user");
+          }
+        });
+
+        if (successCount > 0) {
           toast.success(
-            `Note shared with ${results.length - failedCount} user${results.length - failedCount > 1 ? "s" : ""}`
+            `Note shared with ${successCount} user${successCount > 1 ? "s" : ""}`,
           );
           setSelectedUsers(new Set());
-          setSearchQuery("");
           setOpen(false);
         }
       }
@@ -181,7 +200,7 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
                             <img
                               src={user.image}
                               alt={user.username}
-                              className="h-8 w-8 rounded-full"
+                              className="w-8 h-8 rounded-full"
                             />
                           ) : (
                             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white text-sm font-semibold">
@@ -217,7 +236,8 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
             {/* Selected Count */}
             {selectedUsers.size > 0 && (
               <div className="text-sm text-muted-foreground">
-                {selectedUsers.size} user{selectedUsers.size > 1 ? "s" : ""} selected
+                {selectedUsers.size} user{selectedUsers.size > 1 ? "s" : ""}{" "}
+                selected
               </div>
             )}
 
