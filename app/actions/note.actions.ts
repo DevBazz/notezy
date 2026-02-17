@@ -13,50 +13,118 @@ export interface CreateNoteProps {
 
 export const getAllNotes = async () => {
   try {
-    const user = await currentUser()
-    if(!user) return {success: false, message: "User not authenticated"}
+    const user = await currentUser();
+    if (!user) {
+      return {
+        success: false,
+        notes: [],
+        message: "Unauthorized",
+      };
+    }
 
     const userId = await getDbUserId();
-    
-    const notes = await prisma.note.findMany({
-        where: {
-            authorId: userId,
+
+    // Get own notes
+    const ownNotes = await prisma.note.findMany({
+      where: { authorId: userId },
+      include: { author: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Get shared accepted notes
+    const sharedNotes = await prisma.noteShare.findMany({
+      where: {
+        receiverId: userId,
+        status: "ACCEPTED",
+      },
+      include: {
+        note: {
+          include: { author: true },
         },
-        orderBy: {
-            createdAt: 'desc'
-        }
-    })
-    return {success: true, notes};
+      },
+    });
+
+    const formattedOwn = ownNotes.map((note) => ({
+      ...note,
+      isOwner: true,
+      sharedBy: null,
+    }));
+
+    const formattedShared = sharedNotes.map((share) => ({
+      ...share.note,
+      isOwner: false,
+      sharedBy: share.note.author.username,
+    }));
+
+    const combined = [...formattedOwn, ...formattedShared];
+
+    return {
+      success: true,
+      notes: combined,
+    };
   } catch (error) {
-    console.log("Error fetching notes:", error)
-    return {success: false, message: "Error fetching notes"}
+    console.error("Error fetching notes:", error);
+    return {
+      success: false,
+      notes: [],
+      message: "Error fetching notes",
+    };
   }
-}
+};
  
+
 export const getNotesById = async (noteId: string) => {
-    try {
-       const user = await currentUser()
-       if(!user) return {success: false, message: "Not authorized"}
-       
-       const note = await prisma.note.findUnique({
-        where: {
-            id: noteId,
+  try {
+    const user = await currentUser();
+    if (!user) return { success: false, message: "Not authorized" };
+
+    const userId = user.id;
+
+    // Fetch the note and author info
+    const note = await prisma.note.findUnique({
+      where: { id: noteId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-            }
-          }
-        }
-       })
-       return {success: true, note, message: "Note fetched successfully"};
-    } catch (error) {
-        console.log("Error fetching note by ID:", error)
-        return {success: false, message: "Error fetching note by ID"}
+        shared: {
+          where: { receiverId: userId }, // Only shared with this user
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    if (!note) {
+      return { success: false, message: "Note not found" };
     }
-}
+
+    // Determine if the current user is the owner
+    const isOwner = note.author.id === userId;
+
+    return {
+      success: true,
+      note: {
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        icon: note.icon,
+        color: note.color,
+        isOwner,
+        // if not owner and shared exists, include sharedBy
+        sharedBy: !isOwner && note.shared.length > 0 ? note.author.name : null,
+      },
+      message: "Note fetched successfully",
+    };
+  } catch (error) {
+    console.error("Error fetching note by ID:", error);
+    return { success: false, message: "Error fetching note by ID" };
+  }
+};
 
 export const createNote = async (data: CreateNoteProps) => {
    try {

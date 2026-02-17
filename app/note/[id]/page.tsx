@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { getNotesById, updateNoteById } from "@/app/actions/note.actions";
 import { Icons } from "@/utils/Icons";
 import DeleteAlertDialog from "@/components/delete-alert-box";
@@ -23,24 +22,25 @@ interface Note {
   content: string;
   icon?: string | null;
   color?: string | null;
+  isOwner?: boolean; // added to determine owner
 }
 
 const NotePage = () => {
   const params = useParams();
   const noteId = params.id as string;
-  
+
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  
+
   useEffect(() => {
     const fetchNote = async () => {
       try {
         const data = await getNotesById(noteId);
         if (data.note) {
-          const { id, title, content, icon, color } = data.note;
-          setNote({ id, title, content, icon, color });
+          const { id, title, content, icon, color, isOwner } = data.note;
+          setNote({ id, title, content, icon, color, isOwner });
           setTitle(title || "");
           setContent(content || "");
         } else {
@@ -58,20 +58,19 @@ const NotePage = () => {
     }
   }, [noteId]);
 
-
   const handleUpdate = async () => {
-      try {
-        if(title === note?.title && content === note?.content) {
-          return;
-        }
- 
-       await updateNoteById(noteId, { title, content });
-       toast.success("Saved");      
-      } catch (error) {
-        toast.error("Error updating note. Please try again.");
-        console.error("Error updating note:", error);
-      }
-  }
+    if (!note?.isOwner) return; // Only owner can update
+
+    try {
+      if (title === note.title && content === note.content) return;
+
+      await updateNoteById(noteId, { title, content });
+      toast.success("Saved");
+    } catch (error) {
+      toast.error("Error updating note. Please try again.");
+      console.error("Error updating note:", error);
+    }
+  };
 
   const selectedIcon = Icons.find((icon) => icon.name === note?.icon);
   const Icon = selectedIcon?.Icon;
@@ -99,9 +98,7 @@ const NotePage = () => {
                    bg-linear-to-br from-background to-muted/40 
                    transition-all duration-300"
         style={{
-          boxShadow: note.color
-            ? `0 12px 30px -10px ${note.color}40`
-            : undefined,
+          boxShadow: note.color ? `0 12px 30px -10px ${note.color}40` : undefined,
         }}
       >
         <CardHeader className="flex items-center gap-4 px-6 pt-6 pb-2">
@@ -120,31 +117,35 @@ const NotePage = () => {
             )}
           </div>
 
-          {/* Editable Title */}
+          {/* Title */}
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="text-xl font-semibold flex-1 border-none"
             placeholder="Note Title"
             onBlur={() => handleUpdate()}
+            readOnly={!note.isOwner} // Owner only
           />
         </CardHeader>
 
         <CardContent className="px-6 pt-3 pb-4">
-          {/* Editable Content */}
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="text-sm min-h-50 resize-none border-none"
             placeholder="Write your note..."
             onBlur={() => handleUpdate()}
+            readOnly={!note.isOwner} // Owner only
           />
         </CardContent>
 
-        <CardFooter className="px-6 pb-6 pt-2 flex justify-end gap-3">
-          <ShareDialog noteId={note.id} />
-          <DeleteAlertDialog noteId={note.id} />
-        </CardFooter>
+        {/* Only show Share & Delete buttons to owner */}
+        {note.isOwner && (
+          <CardFooter className="px-6 pb-6 pt-2 flex justify-end gap-3">
+            <ShareDialog noteId={note.id} />
+            <DeleteAlertDialog noteId={note.id} />
+          </CardFooter>
+        )}
       </Card>
     </section>
   );
