@@ -20,7 +20,7 @@ export const getAllNotes = async () => {
     
     const notes = await prisma.note.findMany({
         where: {
-            authorId: userId
+            authorId: userId,
         },
         orderBy: {
             createdAt: 'desc'
@@ -130,6 +130,5 @@ export const deleteNote = async (noteId: string) => {
       authorId: userId,
     },
   });
-  revalidatePath('/')
   return { success: true };
 };

@@ -52,3 +52,37 @@ export async function getDbUserId() {
         
     return user.id    
 }
+
+export async function getAllUsers() {
+    try {
+        const { userId: clerkId } = await auth();
+        if (!clerkId) return [];
+
+        const currentUser = await getUserByClerkId(clerkId);
+        if (!currentUser) return [];
+
+        // Get all users except the current user
+        const users = await prisma.user.findMany({
+            where: {
+                id: {
+                    not: currentUser.id,
+                },
+            },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                image: true,
+                name: true,
+            },
+            orderBy: {
+                username: 'asc',
+            },
+        });
+
+        return users;
+    } catch (error) {
+        console.log("Error fetching users", error);
+        return [];
+    }
+}

@@ -48,7 +48,7 @@ export default function RootLayout({
             <section className="col-span-5 p-8">
               <SidebarTrigger />
               {children}
-              <Toaster position="top-right" reverseOrder={false}/>
+              <Toaster position="top-center" reverseOrder={false}/>
               </section>
           </main>
           </ThemeProvider>

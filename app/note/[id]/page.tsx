@@ -11,10 +11,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Share2 } from "lucide-react";
 import { getNotesById, updateNoteById } from "@/app/actions/note.actions";
 import { Icons } from "@/utils/Icons";
 import DeleteAlertDialog from "@/components/delete-alert-box";
+import ShareDialog from "@/components/share-dialog";
 import toast from "react-hot-toast";
 
 interface Note {
@@ -142,9 +142,7 @@ const NotePage = () => {
         </CardContent>
 
         <CardFooter className="px-6 pb-6 pt-2 flex justify-end gap-3">
-          <Button variant="ghost" size="icon" className="rounded-xl">
-            <Share2 className="h-5 w-5" />
-          </Button>
+          <ShareDialog noteId={note.id} />
           <DeleteAlertDialog noteId={note.id} />
         </CardFooter>
       </Card>

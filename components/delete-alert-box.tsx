@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,16 +23,27 @@ interface DeleteAlertDialogProps {
 }
 
 export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
-  
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
 
       const result = await deleteNote(noteId);
-      toast.success("Note deleted successfully!");
       
+      
+      if (result?.success) {
+        toast.success("Note deleted successfully!");
+        
+        
+        setIsOpen(false);
+        
+        
+        router.push("/");
+        router.refresh();
+      } 
     } catch (error) {
       console.error("Delete failed:", error);
       toast.error("Failed to delete the note. Please try again.");
@@ -41,13 +53,15 @@ export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
   };
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="rounded-xl hover:bg-red-100"
+          className="rounded-xl text-red-500 hover:bg-red-100 w-26"
+          onClick={() => setIsOpen(true)}
         >
+          Delete
           <Trash2 className="h-5 w-5 text-red-500" />
         </Button>
       </AlertDialogTrigger>
@@ -69,7 +83,10 @@ export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
           </AlertDialogCancel>
 
           <AlertDialogAction
-            onClick={handleDelete}
+            onClick={(e) => {
+              e.preventDefault(); // Prevent default to handle manually
+              handleDelete();
+            }}
             disabled={isDeleting}
             className="bg-red-600 hover:bg-red-700"
           >

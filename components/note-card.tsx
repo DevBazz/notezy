@@ -73,30 +73,6 @@ const NoteCard = ({ note }: { note: Note }) => {
     </CardContent>
   </Link>
 
-  {/* ACTIONS — NOT CLICKABLE LINK */}
-  <CardFooter className="px-4 pb-4 pt-2">
-    <div className="flex items-center justify-end gap-2 w-full 
-                    opacity-70 group-hover:opacity-100 
-                    transition-opacity duration-300">
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="rounded-xl hover:bg-muted transition"
-      >
-        <Share2 className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition"
-      >
-        <Trash2 className="h-4 w-4 text-red-500" />
-      </Button>
-
-    </div>
-  </CardFooter>
 </Card>
   );
 };
