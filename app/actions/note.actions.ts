@@ -78,7 +78,7 @@ export const getNotesById = async (noteId: string) => {
     const user = await currentUser();
     if (!user) return { success: false, message: "Not authorized" };
 
-    const userId = user.id;
+    const userId = await getDbUserId();
 
     // Fetch the note and author info
     const note = await prisma.note.findUnique({
@@ -104,7 +104,7 @@ export const getNotesById = async (noteId: string) => {
     }
 
     // Determine if the current user is the owner
-    const isOwner = note.author.id === userId;
+    const isOwner = note.authorId === userId;
 
     return {
       success: true,
