@@ -16,7 +16,7 @@ export function getCorsHeaders(request: NextRequest): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Cookie",
     "Access-Control-Allow-Credentials": "true",
   };
 }
