@@ -27,7 +27,7 @@ const ClerkUser = () => {
 
       <SignedOut>
         <div className="flex flex-col gap-2">
-          <SignInButton>
+          <SignInButton mode="modal">
             <Button
               variant="outline"
               className="w-full rounded-xl border-border/60 text-sm font-medium
@@ -37,7 +37,7 @@ const ClerkUser = () => {
               Sign in
             </Button>
           </SignInButton>
-          <SignUpButton>
+          <SignUpButton mode="modal">
             <Button
               className="w-full rounded-xl text-sm font-medium gap-2
                          bg-primary text-primary-foreground hover:bg-primary/90
