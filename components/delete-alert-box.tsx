@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { deleteNote } from "@/app/actions/note.actions";
 import toast from "react-hot-toast";
 
@@ -30,23 +30,16 @@ export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-
       const result = await deleteNote(noteId);
-      
-      
       if (result?.success) {
-        toast.success("Note deleted successfully!");
-        
-        
+        toast.success("Note deleted");
         setIsOpen(false);
-        
-        
         router.push("/");
         router.refresh();
-      } 
+      }
     } catch (error) {
       console.error("Delete failed:", error);
-      toast.error("Failed to delete the note. Please try again.");
+      toast.error("Failed to delete note.");
     } finally {
       setIsDeleting(false);
     }
@@ -57,40 +50,53 @@ export default function DeleteAlertDialog({ noteId }: DeleteAlertDialogProps) {
       <AlertDialogTrigger asChild>
         <Button
           variant="outline"
-          size="icon"
-          className="rounded-xl text-red-500 hover:bg-red-100 w-26"
+          size="sm"
+          className="rounded-xl gap-2 border-destructive/30 text-destructive
+                     hover:bg-destructive/10 hover:border-destructive/50
+                     transition-all duration-200 text-xs"
           onClick={() => setIsOpen(true)}
         >
+          <Trash2 className="h-3.5 w-3.5" />
           Delete
-          <Trash2 className="h-5 w-5 text-red-500" />
         </Button>
       </AlertDialogTrigger>
 
-      <AlertDialogContent>
+      <AlertDialogContent className="rounded-2xl border-border/60 max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Are you absolutely sure?
+          <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2">
+            <Trash2 className="w-6 h-6 text-destructive" />
+          </div>
+          <AlertDialogTitle className="text-base font-semibold">
+            Delete this note?
           </AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            note.
+          <AlertDialogDescription className="text-sm text-muted-foreground">
+            This action is permanent and cannot be undone. The note will be removed for everyone it was shared with.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
+        <AlertDialogFooter className="gap-2">
+          <AlertDialogCancel
+            disabled={isDeleting}
+            className="rounded-xl border-border/60 flex-1"
+          >
             Cancel
           </AlertDialogCancel>
-
           <AlertDialogAction
             onClick={(e) => {
-              e.preventDefault(); // Prevent default to handle manually
+              e.preventDefault();
               handleDelete();
             }}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700"
+            className="rounded-xl bg-destructive hover:bg-destructive/90 flex-1 gap-2"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </>
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

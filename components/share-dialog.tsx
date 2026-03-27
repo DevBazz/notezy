@@ -10,11 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Share2, Loader2, Check } from "lucide-react";
+import { Share2, Loader2, Check, Search } from "lucide-react";
 import { getAllUsers } from "@/app/actions/user.actions";
 import { shareRequest } from "@/app/actions/share-note.actions";
 import toast from "react-hot-toast";
-import Image from "next/image";
 
 interface User {
   id: string;
@@ -36,7 +35,6 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [sharing, setSharing] = useState(false);
 
-  // Fetch users when dialog opens
   useEffect(() => {
     if (open) {
       fetchUsers();
@@ -45,14 +43,10 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
       setSearchQuery("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]); //
+  }, [open]);
 
   const fetchUsers = async () => {
-    // Don't fetch if already have users and not loading
-    if (users.length > 0) {
-      return;
-    }
-
+    if (users.length > 0) return;
     try {
       setLoading(true);
       const fetchedUsers = await getAllUsers();
@@ -65,16 +59,13 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
     }
   };
 
-  // Filter users based on search query
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.name &&
-        user.name.toLowerCase().includes(searchQuery.toLowerCase())),
+      (user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Toggle user selection
   const toggleUserSelection = (userId: string) => {
     const newSelected = new Set(selectedUsers);
     if (newSelected.has(userId)) {
@@ -85,48 +76,31 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
     setSelectedUsers(newSelected);
   };
 
-    // Share note with selected users
   const handleShare = async () => {
     if (selectedUsers.size === 0) {
       toast.error("Please select at least one user");
       return;
     }
-
     try {
       setSharing(true);
       const sharePromises = Array.from(selectedUsers).map((userId) =>
-        shareRequest(noteId, userId),
+        shareRequest(noteId, userId)
       );
-
       const results = await Promise.all(sharePromises);
-
-      // Log results for debugging
-      console.log("Share results:", results);
-
-      // Check if all shares were successful
       const allSuccess = results.every((result) => result.success);
 
       if (allSuccess) {
-        toast.success(
-          `Note shared with ${selectedUsers.size} user${selectedUsers.size > 1 ? "s" : ""}`,
-        );
+        toast.success(`Shared with ${selectedUsers.size} user${selectedUsers.size > 1 ? "s" : ""}`);
         setSelectedUsers(new Set());
         setOpen(false);
       } else {
-        // Handle partial failures
         const failedCount = results.filter((r) => !r.success).length;
         const successCount = results.length - failedCount;
-        
         results.forEach((result) => {
-          if (!result.success) {
-            toast.error(result.message || "Failed to share with a user");
-          }
+          if (!result.success) toast.error(result.message || "Failed to share with a user");
         });
-
         if (successCount > 0) {
-          toast.success(
-            `Note shared with ${successCount} user${successCount > 1 ? "s" : ""}`,
-          );
+          toast.success(`Shared with ${successCount} user${successCount > 1 ? "s" : ""}`);
           setSelectedUsers(new Set());
           setOpen(false);
         }
@@ -142,111 +116,110 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
   return (
     <>
       <Button
-        variant="ghost"
-        size="icon"
-        className="rounded-xl"
+        variant="outline"
+        size="sm"
+        className="rounded-xl gap-2 border-border/60 hover:border-primary/40
+                   hover:text-primary transition-all duration-200 text-xs"
         onClick={() => setOpen(true)}
-        title="Share note"
       >
-        <Share2 className="h-5 w-5" />
+        <Share2 className="h-3.5 w-3.5" />
+        Share
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Share Note</DialogTitle>
-            <DialogDescription>
-              Select users to share this note with
+        <DialogContent className="max-w-sm rounded-2xl border-border/60 p-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-border/50">
+            <DialogTitle className="text-base font-semibold">Share note</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+              Select people to share this note with
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <Input
-              placeholder="Search by name, username, or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-lg"
-            />
+          <div className="px-5 py-4 space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or email…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 rounded-xl border-border/60 h-9 text-sm focus-visible:ring-primary/40"
+              />
+            </div>
 
-            {/* Users List */}
-            <div className="max-h-64 overflow-y-auto border rounded-lg p-3 bg-muted/30">
+            {/* Users list */}
+            <div className="max-h-56 overflow-y-auto rounded-xl border border-border/50 bg-muted/20">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : filteredUsers.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  {users.length === 0
-                    ? "No users found"
-                    : "No users match your search"}
+                <div className="py-10 text-center text-xs text-muted-foreground">
+                  {users.length === 0 ? "No users found" : "No users match your search"}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {filteredUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      onClick={() => toggleUserSelection(user.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-all ${
-                        selectedUsers.has(user.id)
-                          ? "bg-primary/10 border border-primary"
-                          : "hover:bg-muted border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        {/* User Avatar */}
+                <div className="p-1.5 space-y-0.5">
+                  {filteredUsers.map((user) => {
+                    const isSelected = selectedUsers.has(user.id);
+                    return (
+                      <div
+                        key={user.id}
+                        onClick={() => toggleUserSelection(user.id)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150
+                          ${isSelected
+                            ? "bg-primary/10 border border-primary/20"
+                            : "hover:bg-accent border border-transparent"
+                          }`}
+                      >
+                        {/* Avatar */}
                         <div className="flex-shrink-0">
                           {user.image ? (
                             <img
                               src={user.image}
                               alt={user.username}
-                              className="w-8 h-8 rounded-full"
+                              className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white text-sm font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-semibold">
                               {user.username.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
 
-                        {/* User Info */}
+                        {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm truncate">
-                              {user.name || user.username}
-                            </h4>
-                            {selectedUsers.has(user.id) && (
-                              <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-sm font-medium truncate leading-none">
+                            {user.name || user.username}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
                             @{user.username}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </p>
                         </div>
+
+                        {/* Check */}
+                        {isSelected && (
+                          <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Selected Count */}
+            {/* Selected count */}
             {selectedUsers.size > 0 && (
-              <div className="text-sm text-muted-foreground">
-                {selectedUsers.size} user{selectedUsers.size > 1 ? "s" : ""}{" "}
-                selected
-              </div>
+              <p className="text-xs text-muted-foreground">
+                {selectedUsers.size} user{selectedUsers.size > 1 ? "s" : ""} selected
+              </p>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
+            {/* Actions */}
+            <div className="flex gap-2 pt-1">
               <Button
                 variant="outline"
                 onClick={() => setOpen(false)}
-                className="flex-1"
+                className="flex-1 rounded-xl border-border/60 text-sm"
                 disabled={sharing}
               >
                 Cancel
@@ -254,15 +227,12 @@ export default function ShareDialog({ noteId }: ShareDialogProps) {
               <Button
                 onClick={handleShare}
                 disabled={sharing || selectedUsers.size === 0}
-                className="flex-1"
+                className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-sm"
               >
                 {sharing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Sharing...
-                  </>
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  "Share Note"
+                  "Share"
                 )}
               </Button>
             </div>
